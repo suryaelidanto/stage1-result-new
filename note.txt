@@ -6,14 +6,14 @@ margin: 10px 20px // atas bawah kiri kanan
 
 fungsi div : untuk grouping elemen agar mudah untuk di styling
 
-# Step GITHUB
+# Step init project to github
 1. git init
 2. git add .
 3. git commit -m "test"
 4. git remote add origin isikan link url repository
 5. git push origin main atau master
 
-Ketika melakukan edit
+# Ketika melakukan edit
 1. git add .
 2. git commit -m "test"
 3. git push origin master
