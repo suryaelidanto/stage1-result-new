@@ -1,3 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
+
+* {
+    text-decoration: none;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    margin: 0;
+}
 
 form {
     width: 350px;
@@ -14,7 +24,9 @@ label {
     font-size: 20px;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
     background-color: #dfdede;
     width: 100%;
     padding: 10px;
@@ -35,6 +47,6 @@ button {
     cursor: pointer;
 }
 
-button:hover{
+button:hover {
     background-color: black;
 }

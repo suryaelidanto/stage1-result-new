@@ -16,26 +16,26 @@ function addBlog(event) {
     let instagram = document.getElementById("input-ig").checked
     let tiktok = document.getElementById("input-tok").checked
 
-    if(facebook){
+    if (facebook) {
         facebook = document.getElementById("input-fb").value
     } else {
         facebook = ""
     }
 
-    if(instagram){
+    if (instagram) {
         instagram = document.getElementById("input-ig").value
     } else {
         instagram = ""
     }
 
-    if(tiktok){
+    if (tiktok) {
         tiktok = document.getElementById("input-tok").value
     } else {
         tiktok = ""
     }
 
     // jika image diisi
-    if(image.length != 0){
+    if (image.length != 0) {
         // untuk membuat url gambar, agar tampil
         image = URL.createObjectURL(image[0])
     } else {
@@ -50,7 +50,7 @@ function addBlog(event) {
         content,
         image,
         postAt: new Date(),
-        author: "Samsul Rijal",
+        author: "Surya Elidanto",
         // startDate,
         // endDate,
         facebook,
@@ -64,11 +64,11 @@ function addBlog(event) {
     renderBlog() // menjalankan function renderBlog agar data blog tampil
 }
 
-function renderBlog(){
+function renderBlog() {
 
     document.getElementById("contents").innerHTML = ''
 
-    for (let index = 0; index < dataBlog.length;  index++){  
+    for (let index = 0; index < dataBlog.length; index++) {
         console.log(dataBlog[index]);
 
         document.getElementById("contents").innerHTML += `
@@ -106,12 +106,12 @@ function renderBlog(){
     }
 }
 
-function getFullTime(time){
-    
+function getFullTime(time) {
+
     // let time = new Date()
     // console.log(time);
-    
-    let monthName = ['Jan', 'Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nop','Dec']
+
+    let monthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nop', 'Dec']
     // console.log(monthName[8]);
 
     let date = time.getDate()
@@ -127,9 +127,9 @@ function getFullTime(time){
     let minutes = time.getMinutes()
 
 
-    if(hours <= 9){
+    if (hours <= 9) {
         hours = "0" + hours
-    } else if(minutes <= 9){
+    } else if (minutes <= 9) {
         minutes = "0" + minutes
     }
 
@@ -137,7 +137,7 @@ function getFullTime(time){
     return `${date} ${monthName[monthIndex]} ${year} ${hours}:${minutes} WIB`
 }
 
-function getDistanceTime(time){
+function getDistanceTime(time) {
 
     let timeNow = new Date()
     let timePost = time
@@ -154,18 +154,18 @@ function getDistanceTime(time){
     let distanceHours = Math.floor(distance / (milisecond * 60 * 60))
     let distanceMinutes = Math.floor(distance / (milisecond * 60))
     let distanceSecond = Math.floor(distance / milisecond)
-    
-    
-    if(distanceDay > 0){
+
+
+    if (distanceDay > 0) {
         return `${distanceDay} day ago`
-    } else if(distanceHours > 0){
+    } else if (distanceHours > 0) {
         return `${distanceHours} hours ago`
-    } else if(distanceMinutes > 0){
+    } else if (distanceMinutes > 0) {
         return `${distanceMinutes} minutes ago`
     } else {
         return `${distanceSecond} seconds ago`
     }
-    
+
 }
 
 // setInterval(function(){
