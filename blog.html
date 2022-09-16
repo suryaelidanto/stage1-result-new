@@ -2,6 +2,7 @@
   <head>
     <title>Creating Blog Page</title>
     <link rel="stylesheet" href="css/blog.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   </head>
   <body>
     <!-- NavBar -->
@@ -24,7 +25,6 @@
       </div>
     </nav>
 
-    <button onclick="addData()">Tambah Data</button>
     <!-- Blog -->
     <!-- Form -->
     <div class="blog">
@@ -40,6 +40,24 @@
               <label for="input-blog-content">Content</label>
               <textarea id="input-blog-content"></textarea>
             </div>
+            <div>
+              <label for="">Start Date</label>
+              <input type="date" id="start-date">
+              <label for="">End Date</label>
+              <input type="date" id="end-date">
+            </div>
+
+            <div>
+              <label for="">Facebook</label>
+              <input type="checkbox" value="facebook" id="input-fb">
+
+              <label for="">Instagram</label>
+              <input type="checkbox" value="instagram" id="input-ig">
+
+              <label for="">Tiktok</label>
+              <input type="checkbox" value="tiktok" id="input-tok">
+            </div>
+
             <div>
               <label>Upload Image</label>
               <div class="input-blog-image-group">
@@ -86,22 +104,15 @@
               numquam! Deleniti maiores expedita eaque deserunt quaerat! Dicta,
               eligendi debitis?
             </p>
+
+            <div style="float:right; margin: 10px">
+              <p style="font-size: 15px; color:grey">1 minutes ago</p>
+            </div>
+
           </div>
         </div>
       </div>
     </div>
-
-    <div id="card" style="display: flex; margin: 10px; flex-wrap:wrap; justify-content:center;">
-
-      <div style="width: 400px; margin: 10px;">
-        <img src="assets/images/astronaut.jpg" alt="" width="100%">
-        <h2>Judul</h2>
-      </div>
-
-    </div>
-
-
-
 
     <script src="js/blog.js"></script>
   </body>
