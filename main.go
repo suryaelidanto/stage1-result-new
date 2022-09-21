@@ -22,7 +22,7 @@ func main() {
 	route.HandleFunc("/", home).Methods("GET")
 	route.HandleFunc("/contact", contact).Methods("GET")
 	route.HandleFunc("/blog", blog).Methods("GET")
-	route.HandleFunc("/blog-detail/{name}", blogDetail).Methods("GET")
+	route.HandleFunc("/blog-detail/{id}", blogDetail).Methods("GET")
 	route.HandleFunc("/form-blog", formAddBlog).Methods("GET")
 	route.HandleFunc("/add-blog", addBlog).Methods("POST")
 
@@ -62,7 +62,7 @@ func addBlog(w http.ResponseWriter, r *http.Request) {
 
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/index.html")
+	var tmpl, err = template.ParseFiles("views/inde.html")
 
 	if err != nil {
 		w.Write([]byte("message : " + err.Error()))
