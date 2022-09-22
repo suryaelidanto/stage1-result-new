@@ -83,39 +83,36 @@
 
       <div id="contents" class="blog-list">
         <!-- dynamic content would be here -->
-        <div class="blog-list-item">
-          <div class="blog-image">
-            <img src="public/images/blog-img.png" alt="" />
-          </div>
-          <div class="blog-content">
-            <div class="btn-group">
-              <button class="btn-edit">Edit Post</button>
-              <button class="btn-post">Post Blog</button>
+        {{range $index, $data := .Blogs}}
+          <div class="blog-list-item">
+            <div class="blog-image">
+              <img src="public/images/blog-img.png" alt="" />
             </div>
-            <h1>
-              <a href="/blog-detail/0" target="_blank"
-                >Pasar Coding di Indonesia Dinilai Masih Menjanjikan</a
-              >
-            </h1>
-            <div class="detail-blog-content">
-              12 Jul 2021 22:30 WIB | Ichsan Emrald Alamsyah
-            </div>
-            <p>
-              Ketimpangan sumber daya manusia (SDM) di sektor digital masih
-              menjadi isu yang belum terpecahkan. Berdasarkan penelitian
-              ManpowerGroup, ketimpangan SDM global, termasuk Indonesia,
-              meningkat dua kali lipat dalam satu dekade terakhir. Lorem ipsum,
-              dolor sit amet consectetur adipisicing elit. Quam, molestiae
-              numquam! Deleniti maiores expedita eaque deserunt quaerat! Dicta,
-              eligendi debitis?
-            </p>
+            <div class="blog-content">
+              <div class="btn-group">
+                <button class="btn-edit">Edit Post</button>
+                <button class="btn-post">Post Blog</button>
+              </div>
+              <h1>
+                <a href="/blog-detail/{{$index}}" target="_blank"
+                  >{{$data.Title}}</a
+                >
+              </h1>
+              <div class="detail-blog-content">
+                {{$data.Post_date}} | {{$data.Author}}
+              </div>
+              <p>
+                {{$data.Content}}
+              </p>
 
-            <div style="float:right; margin: 10px">
-              <p style="font-size: 15px; color:grey">1 minutes ago</p>
-            </div>
+              <div style="float:right; margin: 10px">
+                <p style="font-size: 15px; color:grey">1 minutes ago</p>
+              </div>
 
+            </div>
           </div>
-        </div>
+        {{end}}
+        
       </div>
     </div>
 

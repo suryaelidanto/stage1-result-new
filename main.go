@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -47,17 +48,60 @@ func formAddBlog(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
+// var dataBlog = []
+type Blog struct {
+	Title     string
+	Content   string
+	Author    string
+	Post_date string
+}
+
+var dataBlog = []Blog{}
+
 func addBlog(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		log.Fatal(err)
 	}
+	// fmt.Println("Title : " + r.PostForm.Get("inputTitle")) // get value berdasarkan dari tag input name
+	// fmt.Println("Content : " + r.PostForm.Get("inputContent"))
 
-	fmt.Println("Title : " + r.PostForm.Get("inputTitle")) // get value berdasarkan dari tag input name
-	fmt.Println("Content : " + r.PostForm.Get("inputContent"))
+	var title = r.PostForm.Get("inputTitle")
+	var content = r.PostForm.Get("inputContent")
 
+	// let blog = {
+	// 	title,
+	// 	content
+	// }
+
+	var newBlog = Blog{
+		Title:     title,
+		Content:   content,
+		Author:    "Samsul Rijal",
+		Post_date: time.Now().String(),
+	}
+
+	// dataBlog.push(blog)
+	dataBlog = append(dataBlog, newBlog)
+
+	fmt.Println(dataBlog)
 	http.Redirect(w, r, "/blog", http.StatusMovedPermanently)
+}
 
+func blog(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	var tmpl, err = template.ParseFiles("views/blog.html")
+
+	if err != nil {
+		w.Write([]byte("message : " + err.Error()))
+		return
+	}
+
+	response := map[string]interface{}{
+		"Blogs": dataBlog,
+	}
+
+	tmpl.Execute(w, response)
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
@@ -75,18 +119,6 @@ func home(w http.ResponseWriter, r *http.Request) {
 func contact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	var tmpl, err = template.ParseFiles("views/contact.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	tmpl.Execute(w, nil)
-}
-
-func blog(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/blog.html")
 
 	if err != nil {
 		w.Write([]byte("message : " + err.Error()))
