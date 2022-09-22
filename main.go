@@ -62,7 +62,7 @@ func addBlog(w http.ResponseWriter, r *http.Request) {
 
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/inde.html")
+	var tmpl, err = template.ParseFiles("views/index.html")
 
 	if err != nil {
 		w.Write([]byte("message : " + err.Error()))
