@@ -23,9 +23,10 @@ func main() {
 	route.HandleFunc("/", home).Methods("GET")
 	route.HandleFunc("/contact", contact).Methods("GET")
 	route.HandleFunc("/blog", blog).Methods("GET")
-	route.HandleFunc("/blog-detail/{id}", blogDetail).Methods("GET")
+	route.HandleFunc("/blog-detail/{index}", blogDetail).Methods("GET")
 	route.HandleFunc("/form-blog", formAddBlog).Methods("GET")
 	route.HandleFunc("/add-blog", addBlog).Methods("POST")
+	route.HandleFunc("/delete-blog/{index}", deleteBlog).Methods("GET")
 
 	fmt.Println("server running on port 5000")
 	http.ListenAndServe("localhost:5000", route)
@@ -56,7 +57,16 @@ type Blog struct {
 	Post_date string
 }
 
-var dataBlog = []Blog{}
+var dataBlog = []Blog{
+	{
+		Title:   "Hallo Title",
+		Content: "Hallo Content",
+	},
+	{
+		Title:   "Hallo Title 2",
+		Content: "Hallo Content 2",
+	},
+}
 
 func addBlog(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
@@ -137,13 +147,34 @@ func blogDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+	var BlogDetail = Blog{}
 
-	data := map[string]interface{}{
-		"Title":   "Pasar Coding di Indonesia Dinilai Masih Menjanjikan",
-		"Content": "REPUBLIKA.CO.ID, JAKARTA -- Ketimpangan sumber daya manusia (SDM) disektor digital masih menjadi isu yang belum terpecahkan. Berdasarkan penelitian ManpowerGroup.REPUBLIKA.CO.ID, JAKARTA -- Ketimpangan sumber daya manusia (SDM) disektor digital masih menjadi isu yang belum terpecahkan. Berdasarkan penelitian ManpowerGroup.REPUBLIKA.CO.ID, JAKARTA -- Ketimpangan sumber daya manusia (SDM) disektor digital masih menjadi isu yang belum terpecahkan. Berdasarkan penelitian ManpowerGroup.",
-		"Id":      id,
+	index, _ := strconv.Atoi(mux.Vars(r)["index"])
+
+	for i, data := range dataBlog {
+		if index == i {
+			BlogDetail = Blog{
+				Title:     data.Title,
+				Content:   data.Content,
+				Post_date: data.Post_date,
+				Author:    data.Author,
+			}
+		}
 	}
 
+	data := map[string]interface{}{
+		"Blog": BlogDetail,
+	}
+	// fmt.Println(data)
 	tmpl.Execute(w, data)
+}
+
+func deleteBlog(w http.ResponseWriter, r *http.Request) {
+	index, _ := strconv.Atoi(mux.Vars(r)["index"])
+	fmt.Println(index)
+
+	dataBlog = append(dataBlog[:index], dataBlog[index+1:]...)
+	fmt.Println(dataBlog)
+
+	http.Redirect(w, r, "/blog", http.StatusFound)
 }
