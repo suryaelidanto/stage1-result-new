@@ -73,8 +73,6 @@ func addBlog(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// fmt.Println("Title : " + r.PostForm.Get("inputTitle")) // get value berdasarkan dari tag input name
-	// fmt.Println("Content : " + r.PostForm.Get("inputContent"))
 
 	var title = r.PostForm.Get("inputTitle")
 	var content = r.PostForm.Get("inputContent")
@@ -93,8 +91,8 @@ func addBlog(w http.ResponseWriter, r *http.Request) {
 
 	// dataBlog.push(blog)
 	dataBlog = append(dataBlog, newBlog)
+	// fmt.Println(dataBlog)
 
-	fmt.Println(dataBlog)
 	http.Redirect(w, r, "/blog", http.StatusMovedPermanently)
 }
 
@@ -171,10 +169,10 @@ func blogDetail(w http.ResponseWriter, r *http.Request) {
 
 func deleteBlog(w http.ResponseWriter, r *http.Request) {
 	index, _ := strconv.Atoi(mux.Vars(r)["index"])
-	fmt.Println(index)
+	// fmt.Println(index)
 
 	dataBlog = append(dataBlog[:index], dataBlog[index+1:]...)
-	fmt.Println(dataBlog)
+	// fmt.Println(dataBlog)
 
 	http.Redirect(w, r, "/blog", http.StatusFound)
 }
