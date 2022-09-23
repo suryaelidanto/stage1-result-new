@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"personal-web/connection"
 	"strconv"
 	"time"
 
@@ -14,6 +16,8 @@ import (
 func main() {
 
 	route := mux.NewRouter()
+
+	connection.DatabaseConnect()
 
 	// route path folder public
 	route.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))))
@@ -66,6 +70,7 @@ func formAddBlog(w http.ResponseWriter, r *http.Request) {
 
 // var dataBlog = []
 type Blog struct {
+	ID        int
 	Title     string
 	Content   string
 	Author    string
@@ -120,11 +125,28 @@ func blog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]interface{}{
-		"Blogs": dataBlog,
+	data, _ := connection.Conn.Query(context.Background(), "SELECT id, title, content FROM tb_blog")
+
+	var result []Blog
+	for data.Next() {
+		var each = Blog{}
+
+		err := data.Scan(&each.ID, &each.Title, &each.Content)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		result = append(result, each)
 	}
 
-	tmpl.Execute(w, response)
+	// connection.Conn.QueryRow(context.Background(), "SELECT id, title, content FROM tb_blog").Scan(&result)
+
+	resData := map[string]interface{}{
+		"Blogs": result,
+	}
+
+	tmpl.Execute(w, resData)
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
