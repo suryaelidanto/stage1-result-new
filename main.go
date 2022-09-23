@@ -91,24 +91,6 @@ func addBlog(w http.ResponseWriter, r *http.Request) {
 
 	var title = r.PostForm.Get("inputTitle")
 	var content = r.PostForm.Get("inputContent")
-	// var start = r.PostForm.Get("start")
-	// var end = r.PostForm.Get("end")
-
-	// fmt.Println(start)
-	// fmt.Println(end)
-
-	// t1 := time.Date(start)
-	// t2 := time.Date(1984, time.November, 3, 10, 23, 34, 0, time.UTC)
-
-	// hs := t1.Sub(t2).Hours()
-
-	// hs, mf := math.Modf(hs)
-	// ms := mf * 60
-
-	// ms, sf := math.Modf(ms)
-	// ss := sf * 60
-
-	// fmt.Println(hs, "hours", ms, "minutes", ss, "seconds")
 
 	// let blog = {
 	// 	title,
