@@ -27,10 +27,10 @@ func main() {
 	route.HandleFunc("/", home).Methods("GET")
 	route.HandleFunc("/contact", contact).Methods("GET")
 	route.HandleFunc("/blog", blog).Methods("GET")
-	route.HandleFunc("/blog-detail/{index}", blogDetail).Methods("GET")
+	route.HandleFunc("/blog-detail/{id}", blogDetail).Methods("GET")
 	route.HandleFunc("/form-blog", formAddBlog).Methods("GET")
 	route.HandleFunc("/add-blog", addBlog).Methods("POST")
-	route.HandleFunc("/delete-blog/{index}", deleteBlog).Methods("GET")
+	route.HandleFunc("/delete-blog/{id}", deleteBlog).Methods("GET")
 
 	fmt.Println("server running on port 5000")
 	http.ListenAndServe("localhost:5000", route)
@@ -39,21 +39,6 @@ func main() {
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello World"))
-
-	// var start = "2022-09-20"
-	// var end = "2022-10-20"
-
-	// t1, _ := time.Parse("2006-01-02", end)
-	// t2, _ := time.Parse("2006-01-02", start)
-	// hs := t1.Sub(t2).Hours()
-
-	// hs, mf := math.Modf(hs)
-	// ms := mf * 60
-
-	// ms, sf := math.Modf(ms)
-	// ss := sf * 60
-
-	// fmt.Println(hs, "hours", ms, "minutes", ss, "seconds")
 }
 
 func formAddBlog(w http.ResponseWriter, r *http.Request) {
@@ -70,23 +55,24 @@ func formAddBlog(w http.ResponseWriter, r *http.Request) {
 
 // var dataBlog = []
 type Blog struct {
-	ID        int
-	Title     string
-	Content   string
-	Author    string
-	Post_date string
+	ID          int
+	Title       string
+	Content     string
+	Author      string
+	Post_date   time.Time
+	Format_date string
 }
 
-var dataBlog = []Blog{
-	{
-		Title:   "Hallo Title",
-		Content: "Hallo Content",
-	},
-	{
-		Title:   "Hallo Title 2",
-		Content: "Hallo Content 2",
-	},
-}
+// var dataBlog = []Blog{
+// 	{
+// 		Title:   "Hallo Title",
+// 		Content: "Hallo Content",
+// 	},
+// 	{
+// 		Title:   "Hallo Title 2",
+// 		Content: "Hallo Content 2",
+// 	},
+// }
 
 func addBlog(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
@@ -96,22 +82,21 @@ func addBlog(w http.ResponseWriter, r *http.Request) {
 
 	var title = r.PostForm.Get("inputTitle")
 	var content = r.PostForm.Get("inputContent")
+	var author = r.PostForm.Get("inputAuthor")
 
-	// let blog = {
-	// 	title,
-	// 	content
+	// var newBlog = Blog{
+	// 	Title:     title,
+	// 	Content:   content,
+	// 	Author:    "Samsul Rijal",
+	// 	Post_date: time.Now().Format("2 January 2006 15:04"),
 	// }
 
-	var newBlog = Blog{
-		Title:     title,
-		Content:   content,
-		Author:    "Samsul Rijal",
-		Post_date: time.Now().Format("2 January 2006 15:04"),
+	_, err = connection.Conn.Exec(context.Background(), "INSERT INTO tb_blog(title, content, author) VALUES ($1, $2, $3)", title, content, author)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("message : " + err.Error()))
+		return
 	}
-
-	// dataBlog.push(blog)
-	dataBlog = append(dataBlog, newBlog)
-	// fmt.Println(dataBlog)
 
 	http.Redirect(w, r, "/blog", http.StatusMovedPermanently)
 }
@@ -125,17 +110,20 @@ func blog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, _ := connection.Conn.Query(context.Background(), "SELECT id, title, content FROM tb_blog")
+	data, _ := connection.Conn.Query(context.Background(), "SELECT id, title, content, post_date FROM tb_blog")
 
 	var result []Blog
 	for data.Next() {
 		var each = Blog{}
 
-		err := data.Scan(&each.ID, &each.Title, &each.Content)
+		err := data.Scan(&each.ID, &each.Title, &each.Content, &each.Post_date)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
 		}
+
+		each.Author = "Abel Dustin"
+		each.Format_date = each.Post_date.Format("2 January 2006")
 
 		result = append(result, each)
 	}
@@ -146,6 +134,7 @@ func blog(w http.ResponseWriter, r *http.Request) {
 		"Blogs": result,
 	}
 
+	w.WriteHeader(http.StatusOK)
 	tmpl.Execute(w, resData)
 }
 
@@ -184,18 +173,17 @@ func blogDetail(w http.ResponseWriter, r *http.Request) {
 
 	var BlogDetail = Blog{}
 
-	index, _ := strconv.Atoi(mux.Vars(r)["index"])
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
-	for i, data := range dataBlog {
-		if index == i {
-			BlogDetail = Blog{
-				Title:     data.Title,
-				Content:   data.Content,
-				Post_date: data.Post_date,
-				Author:    data.Author,
-			}
-		}
+	err = connection.Conn.QueryRow(context.Background(), "SELECT id, title, content, post_date FROM tb_blog WHERE id=$1", id).Scan(
+		&BlogDetail.ID, &BlogDetail.Title, &BlogDetail.Content, &BlogDetail.Post_date)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("message : " + err.Error()))
 	}
+
+	BlogDetail.Author = "Abel Dustin"
+	BlogDetail.Format_date = BlogDetail.Post_date.Format("2 January 2006")
 
 	data := map[string]interface{}{
 		"Blog": BlogDetail,
@@ -205,11 +193,14 @@ func blogDetail(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteBlog(w http.ResponseWriter, r *http.Request) {
-	index, _ := strconv.Atoi(mux.Vars(r)["index"])
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	// fmt.Println(index)
 
-	dataBlog = append(dataBlog[:index], dataBlog[index+1:]...)
-	// fmt.Println(dataBlog)
+	_, err := connection.Conn.Exec(context.Background(), "DELETE FROM tb_blog WHERE id=$1", id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("message : " + err.Error()))
+	}
 
-	http.Redirect(w, r, "/blog", http.StatusFound)
+	http.Redirect(w, r, "/blog", http.StatusMovedPermanently)
 }
