@@ -42,8 +42,17 @@
     <div class="container-fluid d-flex justify-content-center align-items-center">
 
         <div class="container-form">
+
             <h2 class="mb-3 text-center">Form Login</h2>
             <form action="/login" method="POST">
+
+                {{if .FlashData}}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>{{.FlashData}}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {{end}}
+
                 <div class="mb-3">
                     <label for="inputEmail" class="form-label">Email</label>
                     <input type="text" name="inputEmail" id="inputEmail" class="form-control" required>

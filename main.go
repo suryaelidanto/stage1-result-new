@@ -85,7 +85,7 @@ func formAddBlog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl.Execute(w, nil)
+	tmpl.Execute(w, Data)
 }
 
 func addBlog(w http.ResponseWriter, r *http.Request) {
@@ -292,7 +292,22 @@ func formLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl.Execute(w, nil)
+	var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
+	session, _ := store.Get(r, "SESSION_KEY")
+
+	fm := session.Flashes("message")
+
+	var flashes []string
+	if len(fm) > 0 {
+		session.Save(r, w)
+		for _, f1 := range fm {
+			// meamasukan flash message
+			flashes = append(flashes, f1.(string))
+		}
+	}
+
+	Data.FlashData = strings.Join(flashes, "")
+	tmpl.Execute(w, Data)
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
@@ -310,7 +325,14 @@ func login(w http.ResponseWriter, r *http.Request) {
 		"SELECT * FROM tb_user WHERE email=$1", email).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
 
 	if err != nil {
-		fmt.Println("Email belum terdaftar")
+
+		// fmt.Println("Email belum terdaftar")
+		var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
+		session, _ := store.Get(r, "SESSION_KEY")
+
+		session.AddFlash("Email belum terdaftar!", "message")
+		session.Save(r, w)
+
 		http.Redirect(w, r, "/form-login", http.StatusMovedPermanently)
 		// w.WriteHeader(http.StatusBadRequest)
 		// w.Write([]byte("message : Email belum terdaftar " + err.Error()))
@@ -320,9 +342,16 @@ func login(w http.ResponseWriter, r *http.Request) {
 	// melakukan pengecekan password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		fmt.Println("Password salah")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("message : Password salah " + err.Error()))
+		// fmt.Println("Password salah")
+		var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
+		session, _ := store.Get(r, "SESSION_KEY")
+
+		session.AddFlash("Password Salah!", "message")
+		session.Save(r, w)
+
+		http.Redirect(w, r, "/form-login", http.StatusMovedPermanently)
+		// w.WriteHeader(http.StatusBadRequest)
+		// w.Write([]byte("message : Email belum terdaftar " + err.Error()))
 		return
 	}
 
@@ -342,8 +371,6 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {
-
-	fmt.Println("Logout")
 
 	var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
 	session, _ := store.Get(r, "SESSION_KEY")
