@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Blog Post</title>
+    <title>Form Register</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
     <link rel="stylesheet" href="/public/css/add-blog.css">
     <link rel="icon" type="image/x-icon" href="public/images/logo.png">
@@ -26,6 +26,11 @@
                 <a class="nav-link active text-orange" aria-current="page" href="/blog">Blog</a>
               </li>
             </ul>
+            
+            <div>
+              <a href="/form-register" class="btn bg-light text-dark px-2">Register</a>
+              <a href="/form-login" class="btn bg-light text-dark px-2">Login</a>
+            </div>
             <a href="/contact" class="btn bg-orange text-white px-2">Contact Me</a>
           </div>
         </div>
@@ -36,22 +41,22 @@
     <div class="container-fluid d-flex justify-content-center align-items-center">
 
         <div class="container-form">
-            <h2 class="mb-3 text-center">Create Blog Post</h2>
-            <form action="/add-blog" method="POST">
+            <h2 class="mb-3 text-center">Form Register</h2>
+            <form action="/register" method="POST">
                 <div class="mb-3">
-                    <label for="inputTitle" class="form-label">Title</label>
-                    <input type="text" name="inputTitle" id="inputTitle" class="form-control">
+                    <label for="inputName" class="form-label">Name</label>
+                    <input type="text" name="inputName" id="inputName" class="form-control" required>
                 </div>
                 <div class="mb-3">
-                    <label for="inputContent" class="form-label">Content</label>
-                    <textarea id="inputContent" name="inputContent" class="form-control"></textarea>
+                    <label for="inputEmail" class="form-label">Email</label>
+                    <input type="text" name="inputEmail" id="inputEmail" class="form-control" required>
                 </div>
                 <div class="mb-3">
-                    <label for="inputImage" class="form-label">Upload Image</label>
-                    <input type="file" id="inputImage" class="form-control">
+                    <label for="inputPassword" class="form-label">Password</label>
+                    <input type="password" name="inputPassword" id="inputPassword" class="form-control" required>
                 </div>
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <button class="btn bg-orange text-white">Post Blog</button>
+                    <button class="btn bg-orange text-white">Register</button>
                 </div>
             </form>
         </div>

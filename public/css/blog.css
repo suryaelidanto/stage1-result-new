@@ -49,7 +49,16 @@ nav ul li a.list-active {
   font-weight: 700;
 }
 
-nav .right-side a {
+nav .right-side .btn-auth {
+  font-size: 15px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 10px;
+  color: black;
+  text-decoration: none;
+}
+
+nav .right-side .btn-contact {
   font-size: 15px;
   padding: 8px 20px;
   background-color: #ec4d37;
