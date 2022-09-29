@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"personal-web/connection"
+	"personal-web/middleware"
 	"strconv"
 	"strings"
 	"time"
@@ -25,6 +26,9 @@ func main() {
 	// route path folder public
 	route.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))))
 
+	//route path folder uploads
+	route.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads/"))))
+
 	// routing
 	route.HandleFunc("/hello", helloWorld).Methods("GET")
 	route.HandleFunc("/", home).Methods("GET")
@@ -32,7 +36,7 @@ func main() {
 	route.HandleFunc("/blog", blog).Methods("GET")
 	route.HandleFunc("/blog-detail/{id}", blogDetail).Methods("GET")
 	route.HandleFunc("/form-blog", formAddBlog).Methods("GET")
-	route.HandleFunc("/add-blog", addBlog).Methods("POST")
+	route.HandleFunc("/add-blog", middleware.UploadFile(addBlog)).Methods("POST")
 	route.HandleFunc("/delete-blog/{id}", deleteBlog).Methods("GET")
 
 	route.HandleFunc("/form-register", formRegister).Methods("GET")
@@ -60,8 +64,10 @@ type Blog struct {
 	ID          int
 	Title       string
 	Content     string
+	Image       string
 	Post_date   time.Time
 	Format_date string
+	Author      string
 	IsLogin     bool
 }
 
@@ -97,7 +103,19 @@ func addBlog(w http.ResponseWriter, r *http.Request) {
 	var title = r.PostForm.Get("inputTitle")
 	var content = r.PostForm.Get("inputContent")
 
-	_, err = connection.Conn.Exec(context.Background(), "INSERT INTO tb_blog(title, content) VALUES ($1, $2)", title, content)
+	// Context from file upload
+	dataContext := r.Context().Value("dataFile")
+	image := dataContext.(string)
+
+	// code here
+	var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
+	session, _ := store.Get(r, "SESSION_KEY")
+
+	// Mendapatkan author_id
+	author := session.Values["ID"].(int)
+	fmt.Println(author)
+
+	_, err = connection.Conn.Exec(context.Background(), "INSERT INTO tb_blog(title, content, author_id, image) VALUES ($1, $2, $3, $4)", title, content, author, image)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("message : " + err.Error()))
@@ -139,13 +157,13 @@ func blog(w http.ResponseWriter, r *http.Request) {
 
 	Data.FlashData = strings.Join(flashes, "")
 
-	data, _ := connection.Conn.Query(context.Background(), "SELECT id, title, content, post_date FROM tb_blog ORDER BY id DESC")
+	data, _ := connection.Conn.Query(context.Background(), "SELECT tb_blog.id, title, content, post_date, image, tb_user.name as author FROM tb_blog LEFT JOIN tb_user ON tb_blog.author_id = tb_user.id ORDER BY id DESC")
 
 	var result []Blog
 	for data.Next() {
 		var each = Blog{}
 
-		err := data.Scan(&each.ID, &each.Title, &each.Content, &each.Post_date)
+		err := data.Scan(&each.ID, &each.Title, &each.Content, &each.Post_date, &each.Image, &each.Author)
 		if err != nil {
 			fmt.Println(err.Error())
 			return
@@ -218,8 +236,8 @@ func blogDetail(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
-	err = connection.Conn.QueryRow(context.Background(), "SELECT id, title, content, post_date FROM tb_blog WHERE id=$1", id).Scan(
-		&BlogDetail.ID, &BlogDetail.Title, &BlogDetail.Content, &BlogDetail.Post_date)
+	err = connection.Conn.QueryRow(context.Background(), "SELECT tb_blog.id, title, content, post_date, image, tb_user.name as author FROM tb_blog LEFT JOIN tb_user ON tb_blog.author_id = tb_user.id WHERE tb_blog.id=$1", id).Scan(
+		&BlogDetail.ID, &BlogDetail.Title, &BlogDetail.Content, &BlogDetail.Post_date, &BlogDetail.Image, &BlogDetail.Author)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("message : " + err.Error()))
@@ -361,6 +379,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	// berfungsi untuk menyimpan data kedalam session browser
 	session.Values["Name"] = user.Name
 	session.Values["Email"] = user.Email
+	session.Values["ID"] = user.ID
 	session.Values["IsLogin"] = true
 	session.Options.MaxAge = 10800 // 3 JAM
 

@@ -37,7 +37,7 @@
 
         <div class="container-form">
             <h2 class="mb-3 text-center">Create Blog Post</h2>
-            <form action="/add-blog" method="POST">
+            <form action="/add-blog" method="POST" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="inputTitle" class="form-label">Title</label>
                     <input type="text" name="inputTitle" id="inputTitle" class="form-control">
@@ -48,7 +48,7 @@
                 </div>
                 <div class="mb-3">
                     <label for="inputImage" class="form-label">Upload Image</label>
-                    <input type="file" id="inputImage" class="form-control">
+                    <input type="file" id="inputImage" name="inputImage" class="form-control">
                 </div>
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                     <button class="btn bg-orange text-white">Post Blog</button>
