@@ -1,24 +1,21 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
-	route := mux.NewRouter()
+	e := echo.New()
 
-	route.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello World"))
-	}).Methods("GET")
+	e.GET("/", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello World!")
+	})
 
-	route.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello About"))
-	}).Methods("GET")
+	e.GET("/about", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello About")
+	})
 
-	fmt.Println("Server running on port 5000")
-	http.ListenAndServe("localhost:5000", route)
-
+	e.Logger.Fatal(e.Start("localhost:5000"))
 }
