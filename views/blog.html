@@ -2,7 +2,7 @@
 
 <head>
   <title>Creating Blog Page</title>
-  <link rel="stylesheet" href="public/css/blog.css" />
+  <link rel="stylesheet" href="/public/css/blog.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
     integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -13,7 +13,7 @@
   <nav>
     <div class="left-side">
       <a href="/">
-        <img src="public/images/logo.png" alt="logo" />
+        <img src="/public/images/logo.png" alt="logo" />
       </a>
       <ul>
         <li>
@@ -67,7 +67,7 @@
               <div class="input-blog-image-group">
                 <label for="input-blog-image">
                   <p>Attach File</p>
-                  <img src="public/images/file.png" alt="file" />
+                  <img src="/public/images/file.png" alt="file" />
                 </label>
                 <input type="file" id="input-blog-image" hidden />
               </div>
@@ -91,18 +91,18 @@
       {{range $index, $data := .Blogs}}
       <div class="blog-list-item">
         <div class="blog-image">
-          <img src="public/images/blog-img.png" alt="" />
+          <img src="/public/images/blog-img.png" alt="" />
         </div>
         <div class="blog-content">
           <div class="btn-group">
             <a href="#" class="btn-edit">Edit Post</a>
-            <a href="/delete-blog/{{$index}}" class="btn-post">Delete Blog</a>
+            <a href="/blog-delete/{{$index}}" class="btn-post">Delete Blog</a>
           </div>
           <h1>
             <a href="/blog-detail/{{$index}}" target="_blank">{{$data.Title}}</a>
           </h1>
           <div class="detail-blog-content">
-            {{$data.Post_date}} | {{$data.Author}}
+            {{$data.PostDate}} | {{$data.Author}}
           </div>
           <p>
             {{$data.Content}}
