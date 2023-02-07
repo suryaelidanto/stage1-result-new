@@ -7,7 +7,6 @@ import (
 	"text/template"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 type Template struct {
@@ -23,8 +22,8 @@ func main() {
 	e := echo.New()
 
 	// Middleware, logger for logging, recover is handling when it's panic
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	// e.Use(middleware.Logger())
+	// e.Use(middleware.Recover())
 
 	// Serve static files from "public" directory
 	e.Static("/public", "public")
