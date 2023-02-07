@@ -1,117 +1,92 @@
 package main
 
 import (
-	"fmt"
-	"html/template"
-	"log"
+	"io"
 	"net/http"
 	"strconv"
+	"text/template"
 
-	"github.com/gorilla/mux"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
+type Template struct {
+	templates *template.Template
+}
+
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
 func main() {
+	// Create new Echo instance
+	e := echo.New()
 
-	route := mux.NewRouter()
+	// Middleware, logger for logging, recover is handling when it's panic
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-	// route path folder public
-	route.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))))
+	// Serve static files from "public" directory
+	e.Static("/public", "public")
 
-	// routing
-	route.HandleFunc("/hello", helloWorld).Methods("GET")
-	route.HandleFunc("/", home).Methods("GET")
-	route.HandleFunc("/contact", contact).Methods("GET")
-	route.HandleFunc("/blog", blog).Methods("GET")
-	route.HandleFunc("/blog-detail/{id}", blogDetail).Methods("GET")
-	route.HandleFunc("/form-blog", formAddBlog).Methods("GET")
-	route.HandleFunc("/add-blog", addBlog).Methods("POST")
-
-	fmt.Println("server running on port 5000")
-	http.ListenAndServe("localhost:5000", route)
-
-}
-
-func helloWorld(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World"))
-}
-
-func formAddBlog(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/add-blog.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
+	t := &Template{
+		templates: template.Must(template.ParseGlob("views/*.html")),
 	}
 
-	tmpl.Execute(w, nil)
+	e.Renderer = t
+
+	// Routing
+	e.GET("/hello", helloWorld)
+	e.GET("/", home)
+	e.GET("/contact", contact)
+	e.GET("/blog", blog)
+	e.GET("/blog-detail/:id", blogDetail)
+	e.GET("/form-blog", formAddBlog)
+	e.POST("/add-blog", addBlog)
+
+	// Start server
+	println("Server running on port 5000")
+	e.Logger.Fatal(e.Start("localhost:5000"))
 }
 
-func addBlog(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Title : " + r.PostForm.Get("inputTitle")) // get value berdasarkan dari tag input name
-	fmt.Println("Content : " + r.PostForm.Get("inputContent"))
-
-	http.Redirect(w, r, "/blog", http.StatusMovedPermanently)
-
+func helloWorld(c echo.Context) error {
+	return c.String(http.StatusOK, "Hello World")
 }
 
-func home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/index.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	tmpl.Execute(w, nil)
+func home(c echo.Context) error {
+	return c.Render(http.StatusOK, "index.html", nil)
 }
 
-func contact(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/contact.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	tmpl.Execute(w, nil)
+func contact(c echo.Context) error {
+	return c.Render(http.StatusOK, "contact.html", nil)
 }
 
-func blog(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/blog.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	tmpl.Execute(w, nil)
+func blog(c echo.Context) error {
+	return c.Render(http.StatusOK, "blog.html", nil)
 }
 
-func blogDetail(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/blog-detail.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+func blogDetail(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
 
 	data := map[string]interface{}{
-		"Title":   "Pasar Coding di Indonesia Dinilai Masih Menjanjikan",
-		"Content": "REPUBLIKA.CO.ID, JAKARTA -- Ketimpangan sumber daya manusia (SDM) disektor digital masih menjadi isu yang belum terpecahkan. Berdasarkan penelitian ManpowerGroup.REPUBLIKA.CO.ID, JAKARTA -- Ketimpangan sumber daya manusia (SDM) disektor digital masih menjadi isu yang belum terpecahkan. Berdasarkan penelitian ManpowerGroup.REPUBLIKA.CO.ID, JAKARTA -- Ketimpangan sumber daya manusia (SDM) disektor digital masih menjadi isu yang belum terpecahkan. Berdasarkan penelitian ManpowerGroup.",
 		"Id":      id,
+		"Title":   "Pasar Coding di Indonesia Dinilai Masih Menjanjikan",
+		"Content": "REPUBLIKA.CO.ID, JAKARTA -- Ketimpangan sumber daya manusia (SDM) disektor digital masih menjadi isu yang belum terpecahkan. Berdasarkan penelitian ManpowerGroup.REPUBLIKA.CO.ID, JAKARTA -- Ketimpangan sumber daya manusia (SDM) disektor digital masih menjadi isu yang belum terpecahkan. Berdasarkan pen...",
 	}
 
-	tmpl.Execute(w, data)
+	return c.Render(http.StatusOK, "blog-detail.html", data)
+}
+
+func formAddBlog(c echo.Context) error {
+	return c.Render(http.StatusOK, "add-blog.html", nil)
+}
+
+func addBlog(c echo.Context) error {
+	title := c.FormValue("inputTitle")
+	content := c.FormValue("inputContent")
+
+	println("Title : " + title)
+	println("Content : " + content)
+
+	return c.Redirect(http.StatusMovedPermanently, "/blog")
 }
