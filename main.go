@@ -1,178 +1,91 @@
 package main
 
 import (
-	"fmt"
-	"html/template"
-	"log"
+	"io"
 	"net/http"
 	"strconv"
-	"time"
+	"text/template"
 
-	"github.com/gorilla/mux"
+	"github.com/labstack/echo/v4"
 )
 
+type Template struct {
+	templates *template.Template
+}
+
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
 func main() {
+	// Create new Echo instance
+	e := echo.New()
 
-	route := mux.NewRouter()
+	// Middleware, logger for logging, recover is handling when it's panic
+	// e.Use(middleware.Logger())
+	// e.Use(middleware.Recover())
 
-	// route path folder public
-	route.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))))
+	// Serve static files from "public" directory
+	e.Static("/public", "public")
 
-	// routing
-	route.HandleFunc("/hello", helloWorld).Methods("GET")
-	route.HandleFunc("/", home).Methods("GET")
-	route.HandleFunc("/contact", contact).Methods("GET")
-	route.HandleFunc("/blog", blog).Methods("GET")
-	route.HandleFunc("/blog-detail/{index}", blogDetail).Methods("GET")
-	route.HandleFunc("/form-blog", formAddBlog).Methods("GET")
-	route.HandleFunc("/add-blog", addBlog).Methods("POST")
-	route.HandleFunc("/delete-blog/{index}", deleteBlog).Methods("GET")
-
-	fmt.Println("server running on port 5000")
-	http.ListenAndServe("localhost:5000", route)
-
-}
-
-func helloWorld(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World"))
-}
-
-func formAddBlog(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/add-blog.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
+	t := &Template{
+		templates: template.Must(template.ParseGlob("views/*.html")),
 	}
 
-	tmpl.Execute(w, nil)
+	e.Renderer = t
+
+	// Routing
+	e.GET("/hello", helloWorld)
+	e.GET("/", home)
+	e.GET("/contact", contact)
+	e.GET("/blog", blog)
+	e.GET("/blog-detail/:id", blogDetail)
+	e.GET("/form-blog", formAddBlog)
+	e.POST("/add-blog", addBlog)
+
+	// Start server
+	println("Server running on port 5000")
+	e.Logger.Fatal(e.Start("localhost:5000"))
 }
 
-// var dataBlog = []
-type Blog struct {
-	Title     string
-	Content   string
-	Author    string
-	Post_date string
+func helloWorld(c echo.Context) error {
+	return c.String(http.StatusOK, "Hello World")
 }
 
-var dataBlog = []Blog{
-	{
-		Title:   "Hallo Title",
-		Content: "Hallo Content",
-	},
-	{
-		Title:   "Hallo Title 2",
-		Content: "Hallo Content 2",
-	},
+func home(c echo.Context) error {
+	return c.Render(http.StatusOK, "index.html", nil)
 }
 
-func addBlog(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var title = r.PostForm.Get("inputTitle")
-	var content = r.PostForm.Get("inputContent")
-
-	// let blog = {
-	// 	title,
-	// 	content
-	// }
-
-	var newBlog = Blog{
-		Title:     title,
-		Content:   content,
-		Author:    "Samsul Rijal",
-		Post_date: time.Now().String(),
-	}
-
-	// dataBlog.push(blog)
-	dataBlog = append(dataBlog, newBlog)
-	// fmt.Println(dataBlog)
-
-	http.Redirect(w, r, "/blog", http.StatusMovedPermanently)
+func contact(c echo.Context) error {
+	return c.Render(http.StatusOK, "contact.html", nil)
 }
 
-func blog(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/blog.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	response := map[string]interface{}{
-		"Blogs": dataBlog,
-	}
-
-	tmpl.Execute(w, response)
+func blog(c echo.Context) error {
+	return c.Render(http.StatusOK, "blog.html", nil)
 }
 
-func home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/index.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	tmpl.Execute(w, nil)
-}
-
-func contact(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/contact.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	tmpl.Execute(w, nil)
-}
-
-func blogDetail(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/blog-detail.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	var BlogDetail = Blog{}
-
-	index, _ := strconv.Atoi(mux.Vars(r)["index"])
-
-	for i, data := range dataBlog {
-		if index == i {
-			BlogDetail = Blog{
-				Title:     data.Title,
-				Content:   data.Content,
-				Post_date: data.Post_date,
-				Author:    data.Author,
-			}
-		}
-	}
+func blogDetail(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
 
 	data := map[string]interface{}{
-		"Blog": BlogDetail,
+		"Id":      id,
+		"Title":   "Pasar Coding di Indonesia Dinilai Masih Menjanjikan",
+		"Content": "REPUBLIKA.CO.ID, JAKARTA -- Ketimpangan sumber daya manusia (SDM) disektor digital masih menjadi isu yang belum terpecahkan. Berdasarkan penelitian ManpowerGroup.REPUBLIKA.CO.ID, JAKARTA -- Ketimpangan sumber daya manusia (SDM) disektor digital masih menjadi isu yang belum terpecahkan. Berdasarkan pen...",
 	}
-	// fmt.Println(data)
-	tmpl.Execute(w, data)
+
+	return c.Render(http.StatusOK, "blog-detail.html", data)
 }
 
-func deleteBlog(w http.ResponseWriter, r *http.Request) {
-	index, _ := strconv.Atoi(mux.Vars(r)["index"])
-	// fmt.Println(index)
+func formAddBlog(c echo.Context) error {
+	return c.Render(http.StatusOK, "add-blog.html", nil)
+}
 
-	dataBlog = append(dataBlog[:index], dataBlog[index+1:]...)
-	// fmt.Println(dataBlog)
+func addBlog(c echo.Context) error {
+	title := c.FormValue("inputTitle")
+	content := c.FormValue("inputContent")
 
-	http.Redirect(w, r, "/blog", http.StatusFound)
+	println("Title : " + title)
+	println("Content : " + content)
+
+	return c.Redirect(http.StatusMovedPermanently, "/blog")
 }
