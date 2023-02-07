@@ -1,5 +1,0 @@
-
-
-1. go mod init name-project
-2. buat file dengan nama main.go
-3. go get -u github.com/gorilla/mux
