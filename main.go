@@ -27,7 +27,7 @@ type Blog struct {
 	Content  string
 	Image    string
 	Author   string
-	PostDate string
+	PostDate time.Time
 }
 
 var dataBlog = []Blog{
@@ -35,13 +35,13 @@ var dataBlog = []Blog{
 		Title:    "Hallo Title",
 		Content:  "Hallo Content",
 		Author:   "Surya Elidanto",
-		PostDate: "07/02/2023",
+		PostDate: time.Now(),
 	},
 	{
 		Title:    "Hallo Title 2",
 		Content:  "Hallo Content 2",
 		Author:   "Surya Elidanto",
-		PostDate: "08/02/2023",
+		PostDate: time.Now(),
 	},
 }
 
@@ -153,7 +153,7 @@ func addBlog(c echo.Context) error {
 		Title:    title,
 		Content:  content,
 		Author:   "Surya Elidanto",
-		PostDate: time.Now().String(),
+		PostDate: time.Now(),
 	}
 
 	dataBlog = append(dataBlog, newBlog)
