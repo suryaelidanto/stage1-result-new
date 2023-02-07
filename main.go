@@ -3,196 +3,134 @@ package main
 import (
 	"context"
 	"fmt"
-	"html/template"
-	"log"
+	"io"
 	"net/http"
 	"personal-web/connection"
 	"strconv"
+	"text/template"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/labstack/echo/v4"
 )
 
-func main() {
-
-	route := mux.NewRouter()
-
-	connection.DatabaseConnect()
-
-	// route path folder public
-	route.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))))
-
-	// routing
-	route.HandleFunc("/hello", helloWorld).Methods("GET")
-	route.HandleFunc("/", home).Methods("GET")
-	route.HandleFunc("/contact", contact).Methods("GET")
-	route.HandleFunc("/blog", blog).Methods("GET")
-	route.HandleFunc("/blog-detail/{index}", blogDetail).Methods("GET")
-	route.HandleFunc("/form-blog", formAddBlog).Methods("GET")
-	route.HandleFunc("/add-blog", addBlog).Methods("POST")
-	route.HandleFunc("/delete-blog/{index}", deleteBlog).Methods("GET")
-
-	fmt.Println("server running on port 5000")
-	http.ListenAndServe("localhost:5000", route)
-
+type Template struct {
+	templates *template.Template
 }
 
-func helloWorld(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World"))
-
-	// var start = "2022-09-20"
-	// var end = "2022-10-20"
-
-	// t1, _ := time.Parse("2006-01-02", end)
-	// t2, _ := time.Parse("2006-01-02", start)
-	// hs := t1.Sub(t2).Hours()
-
-	// hs, mf := math.Modf(hs)
-	// ms := mf * 60
-
-	// ms, sf := math.Modf(ms)
-	// ss := sf * 60
-
-	// fmt.Println(hs, "hours", ms, "minutes", ss, "seconds")
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
 }
 
-func formAddBlog(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/add-blog.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	tmpl.Execute(w, nil)
-}
-
-// var dataBlog = []
 type Blog struct {
-	ID        int
-	Title     string
-	Content   string
-	Author    string
-	Post_date string
+	ID       int
+	Title    string
+	Content  string
+	Image    string
+	Author   string
+	PostDate string
 }
 
 var dataBlog = []Blog{
 	{
-		Title:   "Hallo Title",
-		Content: "Hallo Content",
+		Title:    "Hallo Title",
+		Content:  "Hallo Content",
+		Author:   "Surya Elidanto",
+		PostDate: "07/02/2023",
 	},
 	{
-		Title:   "Hallo Title 2",
-		Content: "Hallo Content 2",
+		Title:    "Hallo Title 2",
+		Content:  "Hallo Content 2",
+		Author:   "Surya Elidanto",
+		PostDate: "08/02/2023",
 	},
 }
 
-func addBlog(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		log.Fatal(err)
+func main() {
+	// Connect to database
+	connection.DatabaseConnect()
+
+	// Create new Echo instance
+	e := echo.New()
+
+	// Middleware, logger for logging, recover is handling when it's panic
+	// e.Use(middleware.Logger())
+	// e.Use(middleware.Recover())
+
+	// Serve static files from "/public" directory
+	e.Static("/public", "public")
+
+	t := &Template{
+		templates: template.Must(template.ParseGlob("views/*.html")),
 	}
 
-	var title = r.PostForm.Get("inputTitle")
-	var content = r.PostForm.Get("inputContent")
+	e.Renderer = t
 
-	// let blog = {
-	// 	title,
-	// 	content
-	// }
+	// Routing
+	e.GET("/hello", helloWorld)
+	e.GET("/", home)
+	e.GET("/contact", contact)
+	e.GET("/blog", blog)
+	e.GET("/blog-detail/:id", blogDetail)
+	e.GET("/form-blog", formAddBlog)
+	e.GET("/blog-delete/:id", deleteBlog)
+	e.POST("/add-blog", addBlog)
 
-	var newBlog = Blog{
-		Title:     title,
-		Content:   content,
-		Author:    "Samsul Rijal",
-		Post_date: time.Now().Format("2 January 2006 15:04"),
-	}
-
-	// dataBlog.push(blog)
-	dataBlog = append(dataBlog, newBlog)
-	// fmt.Println(dataBlog)
-
-	http.Redirect(w, r, "/blog", http.StatusMovedPermanently)
+	// Start server
+	println("Server running on port 5000")
+	e.Logger.Fatal(e.Start("localhost:5000"))
 }
 
-func blog(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/blog.html")
+func helloWorld(c echo.Context) error {
+	return c.String(http.StatusOK, "Hello World")
+}
 
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
+func home(c echo.Context) error {
+	return c.Render(http.StatusOK, "index.html", nil)
+}
 
-	data, _ := connection.Conn.Query(context.Background(), "SELECT id, title, content FROM tb_blog")
+func contact(c echo.Context) error {
+	return c.Render(http.StatusOK, "contact.html", nil)
+}
+
+func blog(c echo.Context) error {
+	data, _ := connection.Conn.Query(context.Background(), "SELECT id, title, content, image, post_date, author FROM tb_blog")
 
 	var result []Blog
 	for data.Next() {
 		var each = Blog{}
 
-		err := data.Scan(&each.ID, &each.Title, &each.Content)
+		err := data.Scan(&each.ID, &each.Title, &each.Content, &each.Image, &each.PostDate, &each.Author)
 		if err != nil {
 			fmt.Println(err.Error())
-			return
+			return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
 		}
 
 		result = append(result, each)
 	}
 
-	// connection.Conn.QueryRow(context.Background(), "SELECT id, title, content FROM tb_blog").Scan(&result)
+	fmt.Print(result)
 
-	resData := map[string]interface{}{
+	blogs := map[string]interface{}{
 		"Blogs": result,
 	}
 
-	tmpl.Execute(w, resData)
+	fmt.Print(blogs)
+
+	return c.Render(http.StatusOK, "blog.html", blogs)
 }
 
-func home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/index.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	tmpl.Execute(w, nil)
-}
-
-func contact(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/contact.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	tmpl.Execute(w, nil)
-}
-
-func blogDetail(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/blog-detail.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
+func blogDetail(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
 
 	var BlogDetail = Blog{}
 
-	index, _ := strconv.Atoi(mux.Vars(r)["index"])
-
 	for i, data := range dataBlog {
-		if index == i {
+		if id == i {
 			BlogDetail = Blog{
-				Title:     data.Title,
-				Content:   data.Content,
-				Post_date: data.Post_date,
-				Author:    data.Author,
+				Title:    data.Title,
+				Content:  data.Content,
+				PostDate: data.PostDate,
+				Author:   data.Author,
 			}
 		}
 	}
@@ -200,16 +138,37 @@ func blogDetail(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"Blog": BlogDetail,
 	}
-	// fmt.Println(data)
-	tmpl.Execute(w, data)
+
+	return c.Render(http.StatusOK, "blog-detail.html", data)
 }
 
-func deleteBlog(w http.ResponseWriter, r *http.Request) {
-	index, _ := strconv.Atoi(mux.Vars(r)["index"])
-	// fmt.Println(index)
+func formAddBlog(c echo.Context) error {
+	return c.Render(http.StatusOK, "add-blog.html", nil)
+}
 
-	dataBlog = append(dataBlog[:index], dataBlog[index+1:]...)
-	// fmt.Println(dataBlog)
+func addBlog(c echo.Context) error {
+	title := c.FormValue("inputTitle")
+	content := c.FormValue("inputContent")
 
-	http.Redirect(w, r, "/blog", http.StatusFound)
+	println("Title : " + title)
+	println("Content : " + content)
+
+	var newBlog = Blog{
+		Title:    title,
+		Content:  content,
+		Author:   "Surya Elidanto",
+		PostDate: time.Now().String(),
+	}
+
+	dataBlog = append(dataBlog, newBlog)
+
+	return c.Redirect(http.StatusMovedPermanently, "/blog")
+}
+
+func deleteBlog(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	dataBlog = append(dataBlog[:id], dataBlog[id+1:]...)
+
+	return c.Redirect(http.StatusFound, "/blog")
 }
