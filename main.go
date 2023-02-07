@@ -108,13 +108,9 @@ func blog(c echo.Context) error {
 		result = append(result, each)
 	}
 
-	fmt.Print(result)
-
 	blogs := map[string]interface{}{
 		"Blogs": result,
 	}
-
-	fmt.Print(blogs)
 
 	return c.Render(http.StatusOK, "blog.html", blogs)
 }
