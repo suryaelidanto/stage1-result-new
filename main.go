@@ -93,17 +93,19 @@ func contact(c echo.Context) error {
 }
 
 func blog(c echo.Context) error {
-	data, _ := connection.Conn.Query(context.Background(), "SELECT id, title, content, image, post_date, author FROM tb_blog")
+	data, _ := connection.Conn.Query(context.Background(), "SELECT id, title, content, image, post_date FROM tb_blog")
 
 	var result []Blog
 	for data.Next() {
 		var each = Blog{}
 
-		err := data.Scan(&each.ID, &each.Title, &each.Content, &each.Image, &each.PostDate, &each.Author)
+		err := data.Scan(&each.ID, &each.Title, &each.Content, &each.Image, &each.PostDate)
 		if err != nil {
 			fmt.Println(err.Error())
 			return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
 		}
+
+		each.Author = "Surya Elidanto"
 
 		result = append(result, each)
 	}
@@ -126,7 +128,7 @@ func blogDetail(c echo.Context) error {
 				Title:    data.Title,
 				Content:  data.Content,
 				PostDate: data.PostDate,
-				Author:   data.Author,
+				Author:   "Surya Elidanto",
 			}
 		}
 	}
