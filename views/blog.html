@@ -60,10 +60,12 @@
           <img src="/uploads/{{$data.Image}}" alt="" />
         </div>
         <div class="blog-content">
+          {{if $.DataSession.IsLogin}}
           <div class="btn-group">
             <a href="#" class="btn-edit">Edit Post</a>
             <a href="/blog-delete/{{$data.ID}}" class="btn-post">Delete Blog</a>
           </div>
+          {{end}}
           <h1>
             <a href="/blog-detail/{{$data.ID}}" target="_blank">{{$data.Title}}</a>
           </h1>
