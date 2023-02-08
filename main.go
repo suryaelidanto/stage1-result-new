@@ -90,7 +90,7 @@ func main() {
 	e.GET("/form-login", formLogin)
 	e.POST("/login", login)
 
-	e.GET("/logout", logout)
+	e.POST("/logout", logout)
 
 	// Start server
 	println("Server running on port 5000")
@@ -284,6 +284,7 @@ func logout(c echo.Context) error {
 	sess, _ := session.Get("session", c)
 	sess.Options.MaxAge = -1
 	sess.Save(c.Request(), c.Response())
+
 	return c.Redirect(http.StatusMovedPermanently, "/")
 }
 

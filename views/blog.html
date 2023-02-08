@@ -30,7 +30,9 @@
 
       {{if .DataSession.IsLogin}}
       <a href="#">Hallo, {{.DataSession.Name}}</a>
-      <a href="/logout" class="btn-auth">Logout</a>
+      <form id="myform" action="/logout" method="POST">
+      </form>
+      <button onclick="document.getElementById('myform').submit()" class="btn-auth">Logout</button>
       {{else}}
       <a href="/form-register" class="btn-auth">Register</a>
       <a href="/form-login" class="btn-auth">Login</a>
