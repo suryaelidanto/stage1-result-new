@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"personal-web/connection"
-	"personal-web/middleware"
 	"strconv"
 	"text/template"
 	"time"
@@ -63,7 +62,6 @@ func main() {
 
 	// Serve static files from "/public" directory
 	e.Static("/public", "public")
-	e.Static("/uploads", "uploads")
 
 	t := &Template{
 		templates: template.Must(template.ParseGlob("views/*.html")),
@@ -81,7 +79,7 @@ func main() {
 	e.GET("/blog", blog)
 	e.GET("/blog-detail/:id", blogDetail)
 	e.GET("/form-blog", formAddBlog)
-	e.POST("/add-blog", middleware.UploadFile(addBlog))
+	e.POST("/add-blog", addBlog)
 	e.GET("/blog-delete/:id", deleteBlog)
 
 	e.GET("/form-register", formRegister)
@@ -169,6 +167,7 @@ func blogDetail(c echo.Context) error {
 	}
 
 	BlogDetail.FormatDate = BlogDetail.PostDate.Format("2 January 2006")
+	BlogDetail.Author = "Surya Elidanto"
 
 	data := map[string]interface{}{
 		"Blog": BlogDetail,
@@ -185,7 +184,7 @@ func addBlog(c echo.Context) error {
 	title := c.FormValue("inputTitle")
 	content := c.FormValue("inputContent")
 
-	image := c.Get("dataFile").(string)
+	image := "astronaut.jpg"
 
 	_, err := connection.Conn.Exec(context.Background(), "INSERT INTO tb_blog (title, content, image, post_date) VALUES ($1, $2, $3, $4)", title, content, image, time.Now())
 
