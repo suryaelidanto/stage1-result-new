@@ -3,72 +3,37 @@ package main
 import (
 	"context"
 	"fmt"
-	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"personal-web/connection"
 	"personal-web/middleware"
 	"strconv"
-	"strings"
+	"text/template"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func main() {
-
-	route := mux.NewRouter()
-
-	connection.DatabaseConnect()
-
-	// route path folder public
-	route.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("./public"))))
-
-	//route path folder uploads
-	route.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads/"))))
-
-	// routing
-	route.HandleFunc("/hello", helloWorld).Methods("GET")
-	route.HandleFunc("/", home).Methods("GET")
-	route.HandleFunc("/contact", contact).Methods("GET")
-	route.HandleFunc("/blog", blog).Methods("GET")
-	route.HandleFunc("/blog-detail/{id}", blogDetail).Methods("GET")
-	route.HandleFunc("/form-blog", formAddBlog).Methods("GET")
-	route.HandleFunc("/add-blog", middleware.UploadFile(addBlog)).Methods("POST")
-	route.HandleFunc("/delete-blog/{id}", deleteBlog).Methods("GET")
-
-	route.HandleFunc("/form-register", formRegister).Methods("GET")
-	route.HandleFunc("/register", register).Methods("POST")
-
-	route.HandleFunc("/form-login", formLogin).Methods("GET")
-	route.HandleFunc("/login", login).Methods("POST")
-
-	route.HandleFunc("/logout", logout).Methods("GET")
-
-	fmt.Println("server running on port 5000")
-	http.ListenAndServe("localhost:5000", route)
-
+type Template struct {
+	templates *template.Template
 }
 
-type SessionData struct {
-	IsLogin   bool
-	UserName  string
-	FlashData string
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
 }
-
-var Data = SessionData{}
 
 type Blog struct {
-	ID          int
-	Title       string
-	Content     string
-	Image       string
-	Post_date   time.Time
-	Format_date string
-	Author      string
-	IsLogin     bool
+	ID         int
+	Title      string
+	Content    string
+	Image      string
+	Author     string
+	PostDate   time.Time
+	FormatDate string
 }
 
 type User struct {
@@ -78,323 +43,255 @@ type User struct {
 	Password string
 }
 
-func helloWorld(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World"))
+type SessionData struct {
+	IsLogin bool
+	Name    string
 }
 
-func formAddBlog(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/add-blog.html")
+var userData = SessionData{}
 
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
+func main() {
+	// Connect to database
+	connection.DatabaseConnect()
+
+	// Create new Echo instance
+	e := echo.New()
+
+	// Middleware, logger for logging, recover is handling when it's panic
+	// e.Use(middleware.Logger())
+	// e.Use(middleware.Recover())
+
+	// Serve static files from "/public" directory
+	e.Static("/public", "public")
+	e.Static("/uploads", "uploads")
+
+	t := &Template{
+		templates: template.Must(template.ParseGlob("views/*.html")),
 	}
 
-	tmpl.Execute(w, Data)
+	e.Renderer = t
+
+	// To use sessions using echo
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte("session"))))
+
+	// Routing
+	e.GET("/hello", helloWorld)
+	e.GET("/", home)
+	e.GET("/contact", contact)
+	e.GET("/blog", blog)
+	e.GET("/blog-detail/:id", blogDetail)
+	e.GET("/form-blog", formAddBlog)
+	e.POST("/add-blog", middleware.UploadFile(addBlog))
+	e.GET("/blog-delete/:id", deleteBlog)
+
+	e.GET("/form-register", formRegister)
+	e.POST("/register", register)
+
+	e.GET("/form-login", formLogin)
+	e.POST("/login", login)
+
+	e.POST("/logout", logout)
+
+	// Start server
+	println("Server running on port 5000")
+	e.Logger.Fatal(e.Start("localhost:5000"))
 }
 
-func addBlog(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var title = r.PostForm.Get("inputTitle")
-	var content = r.PostForm.Get("inputContent")
-
-	// Context from file upload
-	dataContext := r.Context().Value("dataFile")
-	image := dataContext.(string)
-
-	// code here
-	var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
-	session, _ := store.Get(r, "SESSION_KEY")
-
-	// Mendapatkan author_id
-	author := session.Values["ID"].(int)
-	fmt.Println(author)
-
-	_, err = connection.Conn.Exec(context.Background(), "INSERT INTO tb_blog(title, content, author_id, image) VALUES ($1, $2, $3, $4)", title, content, author, image)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	http.Redirect(w, r, "/blog", http.StatusMovedPermanently)
+func helloWorld(c echo.Context) error {
+	return c.String(http.StatusOK, "Hello World")
 }
 
-func blog(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/blog.html")
+func home(c echo.Context) error {
+	sess, _ := session.Get("session", c)
 
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
+	flash := map[string]interface{}{
+		"FlashStatus":  sess.Values["status"],
+		"FlashMessage": sess.Values["message"],
 	}
 
-	var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
-	session, _ := store.Get(r, "SESSION_KEY")
+	delete(sess.Values, "message")
+	delete(sess.Values, "status")
+	sess.Save(c.Request(), c.Response())
 
-	if session.Values["IsLogin"] != true {
-		Data.IsLogin = false
-	} else {
-		Data.IsLogin = session.Values["IsLogin"].(bool)
-		Data.UserName = session.Values["Name"].(string)
-	}
+	return c.Render(http.StatusOK, "index.html", flash)
+}
 
-	fm := session.Flashes("message")
+func contact(c echo.Context) error {
+	return c.Render(http.StatusOK, "contact.html", nil)
+}
 
-	var flashes []string
-	if len(fm) > 0 {
-		session.Save(r, w)
-		for _, f1 := range fm {
-			// meamasukan flash message
-			flashes = append(flashes, f1.(string))
-		}
-	}
-
-	Data.FlashData = strings.Join(flashes, "")
-
-	data, _ := connection.Conn.Query(context.Background(), "SELECT tb_blog.id, title, content, post_date, image, tb_user.name as author FROM tb_blog LEFT JOIN tb_user ON tb_blog.author_id = tb_user.id ORDER BY id DESC")
+func blog(c echo.Context) error {
+	data, _ := connection.Conn.Query(context.Background(), "SELECT tb_blog.id, title, content, image, post_date, tb_user.name as author FROM tb_blog JOIN tb_user ON tb_blog.author_id = tb_user.id ORDER BY id DESC")
 
 	var result []Blog
 	for data.Next() {
 		var each = Blog{}
 
-		err := data.Scan(&each.ID, &each.Title, &each.Content, &each.Post_date, &each.Image, &each.Author)
+		err := data.Scan(&each.ID, &each.Title, &each.Content, &each.Image, &each.PostDate, &each.Author)
 		if err != nil {
 			fmt.Println(err.Error())
-			return
+			return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
 		}
 
-		each.Format_date = each.Post_date.Format("2 January 2006")
+		each.FormatDate = each.PostDate.Format("2 January 2006")
 
 		result = append(result, each)
 	}
 
-	resData := map[string]interface{}{
-		"DataSession": Data,
+	sess, _ := session.Get("session", c)
+
+	if sess.Values["isLogin"] != true {
+		userData.IsLogin = false
+	} else {
+		userData.IsLogin = sess.Values["isLogin"].(bool)
+		userData.Name = sess.Values["name"].(string)
+	}
+
+	blogs := map[string]interface{}{
 		"Blogs":       result,
+		"DataSession": userData,
 	}
 
-	w.WriteHeader(http.StatusOK)
-	tmpl.Execute(w, resData)
+	return c.Render(http.StatusOK, "blog.html", blogs)
 }
 
-func home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/index.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
-	session, _ := store.Get(r, "SESSION_KEY")
-
-	fm := session.Flashes("message")
-
-	var flashes []string
-	if len(fm) > 0 {
-		session.Save(r, w)
-		for _, f1 := range fm {
-			// meamasukan flash message
-			flashes = append(flashes, f1.(string))
-		}
-	}
-
-	Data.FlashData = strings.Join(flashes, "")
-
-	tmpl.Execute(w, Data)
-}
-
-func contact(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/contact.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	tmpl.Execute(w, nil)
-}
-
-func blogDetail(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/blog-detail.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
+func blogDetail(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
 
 	var BlogDetail = Blog{}
 
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+	err := connection.Conn.QueryRow(context.Background(), "SELECT tb_blog.id, title, content, image, post_date, tb_user.name as author FROM tb_blog JOIN tb_user ON tb_blog.author_id = tb_user.id WHERE tb_blog.id=$1", id).Scan(
+		&BlogDetail.ID, &BlogDetail.Title, &BlogDetail.Content, &BlogDetail.Image, &BlogDetail.PostDate, &BlogDetail.Author)
 
-	err = connection.Conn.QueryRow(context.Background(), "SELECT tb_blog.id, title, content, post_date, image, tb_user.name as author FROM tb_blog LEFT JOIN tb_user ON tb_blog.author_id = tb_user.id WHERE tb_blog.id=$1", id).Scan(
-		&BlogDetail.ID, &BlogDetail.Title, &BlogDetail.Content, &BlogDetail.Post_date, &BlogDetail.Image, &BlogDetail.Author)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("message : " + err.Error()))
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
 	}
 
-	BlogDetail.Format_date = BlogDetail.Post_date.Format("2 January 2006")
+	BlogDetail.FormatDate = BlogDetail.PostDate.Format("2 January 2006")
 
 	data := map[string]interface{}{
 		"Blog": BlogDetail,
 	}
-	tmpl.Execute(w, data)
+
+	return c.Render(http.StatusOK, "blog-detail.html", data)
 }
 
-func deleteBlog(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+func formAddBlog(c echo.Context) error {
+	return c.Render(http.StatusOK, "add-blog.html", nil)
+}
+
+func addBlog(c echo.Context) error {
+	title := c.FormValue("inputTitle")
+	content := c.FormValue("inputContent")
+	sess, _ := session.Get("session", c)
+
+	authorId := sess.Values["id"].(int)
+
+	image := c.Get("dataFile").(string)
+
+	_, err := connection.Conn.Exec(context.Background(), "INSERT INTO tb_blog (title, content, image, post_date, author_id) VALUES ($1, $2, $3, $4, $5)", title, content, image, time.Now(), authorId)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
+	}
+
+	return c.Redirect(http.StatusMovedPermanently, "/blog")
+}
+
+func deleteBlog(c echo.Context) error {
+	id, _ := strconv.Atoi(c.Param("id"))
 
 	_, err := connection.Conn.Exec(context.Background(), "DELETE FROM tb_blog WHERE id=$1", id)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("message : " + err.Error()))
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
 	}
 
-	http.Redirect(w, r, "/blog", http.StatusMovedPermanently)
+	return c.Redirect(http.StatusMovedPermanently, "/blog")
 }
 
-func formRegister(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/form-register.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
-	}
-
-	tmpl.Execute(w, nil)
+func formRegister(c echo.Context) error {
+	return c.Render(http.StatusOK, "form-register.html", nil)
 }
 
-func register(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+func register(c echo.Context) error {
+	// parseForm is best practice to make sure request body is form data format, not JSON, XML, etc.
+	err := c.Request().ParseForm()
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	var name = r.PostForm.Get("inputName")
-	var email = r.PostForm.Get("inputEmail")
-	var password = r.PostForm.Get("inputPassword")
+	name := c.FormValue("inputName")
+	email := c.FormValue("inputEmail")
+	password := c.FormValue("inputPassword")
 
 	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
 
-	// fmt.Println(passwordHash)
-
 	_, err = connection.Conn.Exec(context.Background(), "INSERT INTO tb_user(name, email, password) VALUES ($1, $2, $3)", name, email, passwordHash)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("message : " + err.Error()))
-		return
+		redirectWithMessage(c, "Register failed, please try again.", false, "/form-register")
 	}
 
-	http.Redirect(w, r, "/form-login", http.StatusMovedPermanently)
+	return redirectWithMessage(c, "Register success!", true, "/form-login")
 }
 
-func formLogin(w http.ResponseWriter, r *http.Request) {
+func formLogin(c echo.Context) error {
+	sess, _ := session.Get("session", c)
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	var tmpl, err = template.ParseFiles("views/form-login.html")
-
-	if err != nil {
-		w.Write([]byte("message : " + err.Error()))
-		return
+	flash := map[string]interface{}{
+		"FlashStatus":  sess.Values["status"],
+		"FlashMessage": sess.Values["message"],
 	}
 
-	var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
-	session, _ := store.Get(r, "SESSION_KEY")
+	delete(sess.Values, "message")
+	delete(sess.Values, "status")
+	sess.Save(c.Request(), c.Response())
 
-	fm := session.Flashes("message")
-
-	var flashes []string
-	if len(fm) > 0 {
-		session.Save(r, w)
-		for _, f1 := range fm {
-			// meamasukan flash message
-			flashes = append(flashes, f1.(string))
-		}
-	}
-
-	Data.FlashData = strings.Join(flashes, "")
-	tmpl.Execute(w, Data)
+	return c.Render(http.StatusOK, "form-login.html", flash)
 }
 
-func login(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+func login(c echo.Context) error {
+	err := c.Request().ParseForm()
 	if err != nil {
 		log.Fatal(err)
 	}
-	var email = r.PostForm.Get("inputEmail")
-	var password = r.PostForm.Get("inputPassword")
+	email := c.FormValue("inputEmail")
+	password := c.FormValue("inputPassword")
 
 	user := User{}
-
-	// mengambil data email, dan melakukan pengecekan email
-	err = connection.Conn.QueryRow(context.Background(),
-		"SELECT * FROM tb_user WHERE email=$1", email).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
-
+	err = connection.Conn.QueryRow(context.Background(), "SELECT * FROM tb_user WHERE email=$1", email).Scan(&user.ID, &user.Name, &user.Email, &user.Password)
 	if err != nil {
-
-		// fmt.Println("Email belum terdaftar")
-		var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
-		session, _ := store.Get(r, "SESSION_KEY")
-
-		session.AddFlash("Email belum terdaftar!", "message")
-		session.Save(r, w)
-
-		http.Redirect(w, r, "/form-login", http.StatusMovedPermanently)
-		// w.WriteHeader(http.StatusBadRequest)
-		// w.Write([]byte("message : Email belum terdaftar " + err.Error()))
-		return
+		return redirectWithMessage(c, "Email or password incorrect!", false, "/form-login")
 	}
 
-	// melakukan pengecekan password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		// fmt.Println("Password salah")
-		var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
-		session, _ := store.Get(r, "SESSION_KEY")
-
-		session.AddFlash("Password Salah!", "message")
-		session.Save(r, w)
-
-		http.Redirect(w, r, "/form-login", http.StatusMovedPermanently)
-		// w.WriteHeader(http.StatusBadRequest)
-		// w.Write([]byte("message : Email belum terdaftar " + err.Error()))
-		return
+		return redirectWithMessage(c, "Email or password incorrect!", false, "/form-login")
 	}
 
-	var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
-	session, _ := store.Get(r, "SESSION_KEY")
+	sess, _ := session.Get("session", c)
+	sess.Options.MaxAge = 10800 // 3 JAM
+	sess.Values["message"] = "Login success!"
+	sess.Values["status"] = true
+	sess.Values["name"] = user.Name
+	sess.Values["email"] = user.Email
+	sess.Values["id"] = user.ID
+	sess.Values["isLogin"] = true
+	sess.Save(c.Request(), c.Response())
 
-	// berfungsi untuk menyimpan data kedalam session browser
-	session.Values["Name"] = user.Name
-	session.Values["Email"] = user.Email
-	session.Values["ID"] = user.ID
-	session.Values["IsLogin"] = true
-	session.Options.MaxAge = 10800 // 3 JAM
-
-	session.AddFlash("succesfull login", "message")
-	session.Save(r, w)
-
-	http.Redirect(w, r, "/", http.StatusMovedPermanently)
+	return c.Redirect(http.StatusMovedPermanently, "/")
 }
 
-func logout(w http.ResponseWriter, r *http.Request) {
+func logout(c echo.Context) error {
+	sess, _ := session.Get("session", c)
+	sess.Options.MaxAge = -1
+	sess.Save(c.Request(), c.Response())
 
-	var store = sessions.NewCookieStore([]byte("SESSION_KEY"))
-	session, _ := store.Get(r, "SESSION_KEY")
-	session.Options.MaxAge = -1
-	session.Save(r, w)
+	return c.Redirect(http.StatusMovedPermanently, "/")
+}
 
-	http.Redirect(w, r, "/form-login", http.StatusSeeOther)
+func redirectWithMessage(c echo.Context, message string, status bool, path string) error {
+	sess, _ := session.Get("session", c)
+	sess.Values["message"] = message
+	sess.Values["status"] = status
+	sess.Save(c.Request(), c.Response())
+	return c.Redirect(http.StatusMovedPermanently, path)
 }
