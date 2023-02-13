@@ -153,8 +153,15 @@ section {
     border: 1px solid #fff;
 }
 
-.hamburger-nav-container div a:hover {
-    font-weight: bold;
+.hamburger-nav-container .hamburger-active {
+    text-decoration: none;
+    color: #fff;
+    background-color: orangered;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border: 1px solid #fff;
 }
 
 @media only screen and (max-width: 1400px) {
