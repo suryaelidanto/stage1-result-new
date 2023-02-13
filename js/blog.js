@@ -109,7 +109,7 @@ function addBlog(event) {
         content,
         image,
         postAt: "15 September 2022",
-        author: "Samsul Rijal"
+        author: "Surya Elidanto"
     }
 
     dataBlog.push(blog)
