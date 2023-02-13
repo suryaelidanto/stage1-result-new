@@ -1,7 +1,8 @@
-
+@import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
 
 * {
     text-decoration: none;
+    font-family: 'Poppins', sans-serif;
 }
 
 body {
@@ -23,10 +24,20 @@ nav ul {
 
 nav ul li {
     margin-right: 25px;
+    font-size: 20px;
+}
+
+.active {
+    color: orangered;
+}
+
+nav ul li .active {
+    color: orangered;
 }
 
 .nav-left {
-    flex: 50%; /* mengatur lebar */
+    flex: 50%;
+    /* mengatur lebar */
 }
 
 .nav-right {
