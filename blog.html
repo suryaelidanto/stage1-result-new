@@ -4,6 +4,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Creating Blog Page</title>
   <link rel="stylesheet" href="css/blog.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
+    integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body>
@@ -14,19 +17,29 @@
         <li>
           <img src="assets/images/logo.png" alt="logo" />
         </li>
-        <li>
+        <li class="item-collapse">
           <a href="index.html">Home</a>
         </li>
-        <li>
+        <li class="item-collapse">
           <a href="blog.html" class="active">Blog</a>
         </li>
       </ul>
     </div>
 
-    <div class="nav-right">
+    <div class="nav-right item-collapse">
       <a href="contact.html">Contact</a>
     </div>
+    <div class="nav-right" id="barsmenu">
+      <button style="background-color: transparent; border: none; cursor: pointer;" onclick="openHamburger();">
+        <i class="fa-2x fa-solid fa-bars"></i>
+      </button>
+    </div>
   </nav>
+  <div class="hamburger-nav-container" id="hamburger-nav-container">
+    <a href="index.html">Home</a>
+    <a href="blog.html">Blog</a>
+    <a href="contact.html">Contact Me</a>
+  </div>
 
   <!-- Blog -->
   <!-- Form -->
@@ -116,6 +129,7 @@
   </div>
 
   <script src="js/blog.js"></script>
+  <script src="js/index.js"></script>
 </body>
 
 </html>

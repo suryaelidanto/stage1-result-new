@@ -124,6 +124,39 @@ section {
     font-size: 30px;
 }
 
+#barsmenu {
+    display: none;
+}
+
+.hamburger {
+    display: none;
+}
+
+.hamburger a {
+    color: #000;
+}
+
+.hamburger-nav-container {
+    font-size: 23px;
+    list-style-type: none;
+    display: none;
+}
+
+.hamburger-nav-container a {
+    text-decoration: none;
+    color: #fff;
+    background-color: #9a9a9a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border: 1px solid #fff;
+}
+
+.hamburger-nav-container div a:hover {
+    font-weight: bold;
+}
+
 @media only screen and (max-width: 1400px) {
     .container {
         margin-top: 50px;
@@ -174,5 +207,21 @@ section {
 
     .skill {
         flex-direction: column;
+    }
+
+    .item-collapse {
+        display: none;
+    }
+
+    #barsmenu {
+        display: block;
+    }
+
+    .hamburger {
+        flex: 1;
+        display: flex;
+        margin-right: 30px;
+        align-items: center;
+        justify-content: flex-end;
     }
 }
