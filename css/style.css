@@ -93,11 +93,20 @@ nav ul li {
 
 section {
     display: flex;
+    flex-direction: row;
     width: 80%;
 }
 
 .left {
     flex: 30%;
+}
+
+.card-container {
+    width: 350px;
+    border: 1px solid #ebeaea;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px #cecece;
 }
 
 .right {
@@ -113,4 +122,57 @@ section {
 .social-media i {
     margin-right: 20px;
     font-size: 30px;
+}
+
+@media only screen and (max-width: 1400px) {
+    .container {
+        margin-top: 50px;
+    }
+
+    .left {
+        flex: 50%;
+    }
+
+    .right {
+        flex: 100%;
+    }
+}
+
+@media only screen and (max-width: 900px) {
+    .container {
+        margin-top: 300px;
+        margin-bottom: 350px;
+    }
+
+    .left {
+        flex: 100%;
+    }
+
+    .right {
+        flex: 70%;
+        margin-left: 0px;
+    }
+
+    .card-container {
+        width: 500px;
+    }
+
+    section {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+@media only screen and (max-width: 550px) {
+    .container {
+        margin-top: 420px;
+    }
+
+    .card-container {
+        width: 300px;
+    }
+
+    .skill {
+        flex-direction: column;
+    }
 }
