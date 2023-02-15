@@ -30,8 +30,8 @@
 //     get testimonialHTML() {
 //         return `<div class="testimonial">
 //             <img src="${this.image}" class="profile-testimonial" />
-//             <p class=quote>"${this.quote}"</p>
-//             <p class=author>- ${this.author}</p>
+//             <p class="quote">"${this.quote}"</p>
+//             <p class="author">- ${this.author}</p>
 //         </div>`;//    }
 // }
 
@@ -74,7 +74,7 @@
 
 // 
 
-const data = [
+const testimonialData = [
     {
         author: "Surya Elidanto",
         quote: "Keren banget jasanya!",
@@ -95,15 +95,46 @@ const data = [
     }
 ]
 
-let testimonialHTML = '';
+function allTestimonials() {
+    let testimonialHTML = '';
 
-const new_data = data.map(function (item) {
-    testimonialHTML += `<div class="testimonial">
+    const testimonial = testimonialData.map(function (item) {
+        testimonialHTML += `<div class="testimonial">
             <img src="${item.image}" class="profile-testimonial" />
             <p class="quote">"${item.quote}"</p>
             <p class="author">- ${item.author}</p>
             <p class="author">${item.rating} <i class="fa-solid fa-star"></i></p>
         </div>`
-})
+    })
 
-document.getElementById('testimonials').innerHTML = testimonialHTML;
+    document.getElementById('testimonials').innerHTML = testimonialHTML;
+}
+
+allTestimonials()
+
+
+// filter testimonials
+function filterTestimonials(rating) {
+    let testimonialHTML = '';
+
+    const testimonialFiltered = testimonialData.filter(function (item) {
+        return item.rating === rating;
+    })
+
+    // console.log(testimonialFiltered);
+
+    if (testimonialFiltered.length === 0) {
+        testimonialHTML = `<h1> Data not found! </h1>`
+    } else {
+        const testimonial = testimonialFiltered.map(function (item) {
+            testimonialHTML += `<div class="testimonial">
+                <img src="${item.image}" class="profile-testimonial" />
+                <p class="quote">"${item.quote}"</p>
+                <p class="author">- ${item.author}</p>
+                <p class="author">${item.rating} <i class="fa-solid fa-star"></i></p>
+            </div>`
+        })
+    }
+
+    document.getElementById('testimonials').innerHTML = testimonialHTML;
+}
