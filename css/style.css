@@ -87,7 +87,7 @@ nav ul li {
 .container {
     display: flex;
     justify-content: center;
-    height: 90vh;
+    margin: 50px 0px;
     align-items: center;
 }
 
@@ -164,37 +164,19 @@ section {
     border: 1px solid #fff;
 }
 
-@media only screen and (max-width: 1400px) {
-    .container {
-        margin-top: 50px;
-    }
-
-    .left {
-        flex: 50%;
-    }
-
-    .right {
-        flex: 100%;
-    }
-}
-
 @media only screen and (max-width: 900px) {
-    .container {
-        margin-top: 300px;
-        margin-bottom: 350px;
+    .card-container {
+        width: 100%;
     }
 
     .left {
         flex: 100%;
+        display: flex;
+        justify-content: center;
     }
 
     .right {
-        flex: 70%;
         margin-left: 0px;
-    }
-
-    .card-container {
-        width: 500px;
     }
 
     section {
@@ -204,14 +186,6 @@ section {
 }
 
 @media only screen and (max-width: 550px) {
-    .container {
-        margin-top: 420px;
-    }
-
-    .card-container {
-        width: 300px;
-    }
-
     .skill {
         flex-direction: column;
     }
