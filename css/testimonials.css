@@ -134,13 +134,14 @@ nav ul li {
 .testimonials {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    padding: 50px;
+    justify-content: center;
+    margin-top: 30px;
+    width: 100%;
 }
 
 .testimonial {
     width: 25%;
-    margin-bottom: 30px;
+    margin: 0px 15px 30px 15px;
     padding: 20px;
     background-color: #fff;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
