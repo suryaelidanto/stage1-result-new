@@ -167,6 +167,10 @@ section {
 
 
 @media only screen and (max-width: 900px) {
+    .card-container {
+        width: 100%;
+    }
+
     .left {
         flex: 100%;
         display: flex;
@@ -184,10 +188,6 @@ section {
 }
 
 @media only screen and (max-width: 550px) {
-    .card-container {
-        width: 100%;
-    }
-
     .skill {
         flex-direction: column;
     }
