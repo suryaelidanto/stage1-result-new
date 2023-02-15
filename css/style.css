@@ -194,7 +194,7 @@ section {
     }
 
     .card-container {
-        width: 500px;
+        width: 100%;
     }
 
     section {
@@ -209,7 +209,7 @@ section {
     }
 
     .card-container {
-        width: 300px;
+        width: 100%;
     }
 
     .skill {
@@ -230,5 +230,11 @@ section {
         margin-right: 30px;
         align-items: center;
         justify-content: flex-end;
+    }
+}
+
+@media only screen and (max-width: 375px) {
+    .container {
+        margin-top: 500px;
     }
 }
